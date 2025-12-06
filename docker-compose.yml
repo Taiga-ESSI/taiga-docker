@@ -1,9 +1,9 @@
 version: "3.5"
 
 x-environment:
-  &default-back-environment
   # These environment variables will be used by taiga-back and taiga-async.
   # Database settings
+  &default-back-environment
   POSTGRES_DB: "taiga"
   POSTGRES_USER: "${POSTGRES_USER}"
   POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
@@ -30,8 +30,8 @@ x-environment:
   # ...your customizations go here
 
 x-volumes:
-  &default-back-volumes
   # These volumens will be used by taiga-back and taiga-async.
+  &default-back-volumes
   - taiga-static-data:/taiga-back/static
   - taiga-media-data:/taiga-back/media
   # - ./config.py:/taiga-back/settings/config.py
@@ -44,7 +44,7 @@ services:
       POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
       interval: 2s
       timeout: 15s
       retries: 5
@@ -55,9 +55,16 @@ services:
       - taiga
 
   taiga-back:
-    image: taigaio/taiga-back:latest
+    build:
+      context: ../taiga-back
+      dockerfile: docker/Dockerfile
     environment: *default-back-environment
-    volumes: *default-back-volumes
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../taiga-back:/taiga-back
+      - taiga-static-data:/taiga-back/static
+      - taiga-media-data:/taiga-back/media
     networks:
       - taiga
     depends_on:
@@ -67,12 +74,18 @@ services:
         condition: service_started
       taiga-async-rabbitmq:
         condition: service_started
+    command: python manage.py runserver 0.0.0.0:8000
 
   taiga-async:
-    image: taigaio/taiga-back:latest
-    entrypoint: ["/taiga-back/docker/async_entrypoint.sh"]
+    build:
+      context: ../taiga-back
+      dockerfile: docker/Dockerfile
+    entrypoint: [ "/taiga-back/docker/async_entrypoint.sh" ]
     environment: *default-back-environment
-    volumes: *default-back-volumes
+    volumes:
+      - ../taiga-back:/taiga-back
+      - taiga-static-data:/taiga-back/static
+      - taiga-media-data:/taiga-back/media
     networks:
       - taiga
     depends_on:
@@ -97,16 +110,20 @@ services:
       - taiga
 
   taiga-front:
-    image: taigaio/taiga-front:latest
+    build:
+      context: ../taiga-front
+      dockerfile: docker/Dockerfile.dev
+    ports:
+      - "35729:35729"
     environment:
       TAIGA_URL: "${TAIGA_SCHEME}://${TAIGA_DOMAIN}"
       TAIGA_WEBSOCKETS_URL: "${WEBSOCKETS_SCHEME}://${TAIGA_DOMAIN}"
       TAIGA_SUBPATH: "${SUBPATH}"
-      # ...your customizations go here
+    volumes:
+      - ../taiga-front:/taiga
+      - /taiga/node_modules
     networks:
       - taiga
-    # volumes:
-    #   - ./conf.json:/usr/share/nginx/html/conf.json
 
   taiga-events:
     image: taigaio/taiga-events:latest
@@ -162,6 +179,7 @@ volumes:
   taiga-db-data:
   taiga-async-rabbitmq-data:
   taiga-events-rabbitmq-data:
+
 
 networks:
   taiga:
