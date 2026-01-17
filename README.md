@@ -1,472 +1,405 @@
 # Taiga Docker
 
-| :information_source: | If you're already using taiga-docker, follow this [migration guide](https://docs.taiga.io/upgrades-docker-migrate.html) to use the new `.env` based deployment. |
-|---------------|:----|
+[![Managed with Taiga.io](https://img.shields.io/badge/managed%20with-TAIGA.io-709f14.svg)](https://tree.taiga.io/project/taiga/ "Managed with Taiga.io")
 
-> **Note:**
-> You can access the [older docker installation guide](https://docs.taiga.io/setup-production.old.html#setup-prod-with-docker-old) for documentation purposes, intended just for earlier versions of Taiga (prior to ver. 6.6.0)
+> **Fork UPC**: Esta versión incluye soporte para Google SSO y sistema de métricas para Learning Dashboard.
 
+## Tabla de Contenidos
 
-## Getting Started
+- [Características Añadidas](#características-añadidas)
+- [Requisitos](#requisitos)
+- [Quick Start](#quick-start)
+- [Configuración Básica](#configuración-básica)
+- [Variables de Entorno](#variables-de-entorno)
+- [Google SSO Setup](#google-sso-setup)
+- [Sistema de Métricas](#sistema-de-métricas)
+- [Configuraciones Adicionales](#configuraciones-adicionales)
+- [Configuración Avanzada](#configuración-avanzada)
+- [Proxy y SSL](#proxy-y-ssl)
+- [Producción](#producción)
+- [Troubleshooting](#troubleshooting)
 
-This section intends to explain how to get Taiga up and running in a simple two steps, using **docker** and **docker compose**.
+---
 
-If you don't have docker installed, please follow installation instructions from [docker.com](https://docs.docker.com/engine/install/) (**version 19.03.0+**)
+## Características Añadidas
 
-Additionally, it's necessary to have familiarity with Docker, docker compose and Docker repositories.
+Esta versión fork incluye:
 
-> **Note**
-> branch `stable` should be used to deploy Taiga in production and `main` branch for development purposes.
+1. **Google SSO**: Variables de entorno para configurar autenticación con Google
+2. **Métricas**: Configuración para Learning Dashboard integration
+3. **CORS**: Configuración extendida para orígenes permitidos
 
-### Start the application
+---
 
-```sh
-$ ./launch-taiga.sh
-```
+## Requisitos
 
-After some instants, when the application is started you can proceed to create the superuser with the following script:
+- Docker 19.03.0+
+- Docker Compose 2.0+
+- 4GB RAM mínimo (8GB recomendado)
+- 20GB espacio en disco
 
-```sh
-$ ./taiga-manage.sh createsuperuser
-```
+---
 
-The `taiga-manage.sh` script lets launch manage.py commands on the
-back instance:
+## Quick Start
 
-```sh
-$ ./taiga-manage.sh [COMMAND]
-```
-
-If you're testing it in your own machine, you can access the application in **http://localhost:9000**. If you're deploying in a server, you'll need to configure hosts and nginx as described later.
-
-![Taiga screenshot](imgs/taiga.jpg)
-
-## Documentation
-
-Currently, we have authored three main documentation hubs:
-
-- **[API](https://docs.taiga.io/api.html)**: Our API documentation and reference for developing from Taiga API.
-- **[Documentation](https://docs.taiga.io/)**: If you need to install Taiga on your own server, this is the place to find some guides.
-- **[Taiga Community](https://community.taiga.io/)**: This page is intended to be the support reference page for the users.
-
-## Bug reports
-
-If you **find a bug** in Taiga you can always report it:
-
-- in [Taiga issues](https://tree.taiga.io/project/taiga/issues). **This is the preferred way**
-- in [Github issues](https://github.com/taigaio/taiga-docker/issues)
-- send us a mail to support@taiga.io if is a bug related to [tree.taiga.io](https://tree.taiga.io)
-- send us a mail to security@taiga.io if is a **security bug**
-
-One of our fellow Taiga developers will search, find and hunt it as soon as possible.
-
-Please, before reporting a bug, write down how can we reproduce it, your operating system, your browser and version, and if it's possible, a screenshot. Sometimes it takes less time to fix a bug if the developer knows how to find it.
-
-## Community
-
-If you **need help to setup Taiga**, want to **talk about some cool enhancemnt** or you have **some questions**, please go to [Taiga community](https://community.taiga.io/).
-
-If you want to be up to date about announcements of releases, important changes and so on, you can subscribe to our newsletter (you will find it by scrolling down at [https://taiga.io](https://www.taiga.io/)) and follow [@taigaio](https://twitter.com/taigaio) on Twitter.
-
-## Contribute to Taiga
-
-There are many different ways to contribute to Taiga's platform, from patches, to documentation and UI enhancements, just find the one that best fits with your skills. Check out our detailed [contribution guide](https://community.taiga.io/t/how-can-i-contribute/159#code-patches-enhacements-3).
-
-## Code of Conduct
-
-Help us keep the Taiga Community open and inclusive. Please read and follow our [Code of Conduct](https://github.com/taigaio/code-of-conduct/blob/main/CODE_OF_CONDUCT.md).
-
-## License
-
-Every code patch accepted in Taiga codebase is licensed under [MPL 2.0](LICENSE). You must be careful to not include any code that can not be licensed under this license.
-
-Please read carefully [our license](LICENSE) and ask us if you have any questions as well as the [Contribution policy](https://github.com/taigaio/taiga-docker/blob/main/CONTRIBUTING.md).
-
-## Configuration
-
-We've exposed the **Basic configuration** settings in Taiga to an `.env` file. We strongly recommend you to change it, or at least review its content, to avoid using the default values.
-
-Both `docker-compose.yml` and `docker-compose-inits.yml` will read from this file to populate their environment variables, so, initially you don't need to change them. Edit these files just in case you require to enable **Additional customization**, or an **Advanced configuration**.
-
-Refer to these sections for further information.
-
-## Basic Configuration
-
-You will find basic **configuration variables** in the `.env` file. As stated before, we encourage you to edit these values, especially those affecting the security.
-
-### Database settings
-
-These vars are used to create the database for Taiga and connect to it.
+### 1. Clonar repositorios
 
 ```bash
-POSTGRES_USER=taiga  # user to connect to PostgreSQL
-POSTGRES_PASSWORD=taiga  # database user's password
+# Crear directorio de trabajo
+mkdir taiga && cd taiga
+
+# Clonar los tres repositorios
+git clone <url-taiga-back> taiga-back
+git clone <url-taiga-front> taiga-front
+git clone <url-taiga-docker> taiga-docker
+
+cd taiga-docker
 ```
 
-### URLs settings
-
-These vars set where your Taiga instance should be served, and the security protocols to use in the communication layer.
+### 2. Configurar variables de entorno
 
 ```bash
-TAIGA_SCHEME=http  # serve Taiga using "http" or "https" (secured) connection
-TAIGA_DOMAIN=localhost:9000  # Taiga's base URL
-SUBPATH=""  # it'll be appended to the TAIGA_DOMAIN (use either "" or a "/subpath")
-WEBSOCKETS_SCHEME=ws  # events connection protocol (use either "ws" or "wss")
+# Editar el archivo .env
+nano .env
 ```
 
-The default configuration assumes Taiga is being served in a **subdomain**. For example:
+**Cambios mínimos requeridos:**
+- `SECRET_KEY`: Cambiar a un valor único y seguro
+- `POSTGRES_PASSWORD`: Cambiar contraseña de base de datos
+
+### 3. Iniciar Taiga
 
 ```bash
-TAIGA_SCHEME=https
-TAIGA_DOMAIN=taiga.mycompany.com
-SUBPATH=""
-WEBSOCKETS_SCHEME=wss
+./launch-taiga.sh
 ```
 
-If Taiga is being served in a **subpath**, instead of a subdomain, the configuration should be something like this:
+### 4. Crear superusuario
 
 ```bash
-TAIGA_SCHEME=https
-TAIGA_DOMAIN=mycompany.com
-SUBPATH="/taiga"
-WEBSOCKETS_SCHEME=wss
+./taiga-manage.sh createsuperuser
 ```
 
-### Secret Key settings
+### 5. Acceder a Taiga
 
-This variable allows you to set the secret key in Taiga, used in the cryptographic signing.
+Abre en tu navegador: **http://localhost:9000**
 
-```bash
-SECRET_KEY="taiga-secret-key"  # Please, change it to an unpredictable value!
-```
+---
 
-### Email Settings
+## Configuración Básica
 
-By default, emails will be printed in the standard output (`EMAIL_BACKEND=console`). If you have your own SMTP service, change it to `EMAIL_BACKEND=smtp` and configure the rest of these variables with the values supplied by your SMTP provider:
+### Archivo `.env`
 
-```bash
-EMAIL_BACKEND=console  # use an SMTP server or display the emails in the console (either "smtp" or "console")
-EMAIL_HOST=smtp.host.example.com  # SMTP server address
-EMAIL_PORT=587   # default SMTP port
-EMAIL_HOST_USER=user  # user to connect the SMTP server
-EMAIL_HOST_PASSWORD=password  # SMTP user's password
-EMAIL_DEFAULT_FROM=changeme@example.com  # email address for the automated emails
-
-# EMAIL_USE_TLS/EMAIL_USE_SSL are mutually exclusive (only set one of those to True)
-EMAIL_USE_TLS=True  # use TLS (secure) connection with the SMTP server
-EMAIL_USE_SSL=False  # use implicit TLS (secure) connection with the SMTP server
-```
-
-### Queue manager settings
-
-These variables are used to leave messages in the rabbitmq services.
+El archivo `.env` contiene todas las variables de configuración:
 
 ```bash
-RABBITMQ_USER=taiga  # user to connect to RabbitMQ
-RABBITMQ_PASS=taiga  # RabbitMQ user's password
-RABBITMQ_VHOST=taiga  # RabbitMQ container name
-RABBITMQ_ERLANG_COOKIE=secret-erlang-cookie  # unique value shared by any connected instance of RabbitMQ
-```
+# ===========================================
+# CONFIGURACIÓN DE TAIGA
+# ===========================================
 
-### Attachments settings
+# --- URLs y Dominio ---
+TAIGA_SCHEME=http                    # http o https
+TAIGA_DOMAIN=localhost:9000          # Dominio de Taiga
+SUBPATH=""                           # Subpath (ej: "/taiga" o "")
+WEBSOCKETS_SCHEME=ws                 # ws o wss
 
-You can configure how long the attachments will be accessible by changing the token expiration timer. After that amount of seconds the token will expire, but you can always get a new attachment url with an active token.
+# --- Seguridad (CAMBIAR EN PRODUCCIÓN) ---
+SECRET_KEY="taiga-secret-key"        # Clave secreta única
 
-```bash
-ATTACHMENTS_MAX_AGE=360  # token expiration date (in seconds)
-```
+# --- Base de Datos ---
+POSTGRES_USER=taiga
+POSTGRES_PASSWORD=taiga              # Cambiar en producción
 
-### Telemetry Settings
+# --- Email ---
+EMAIL_BACKEND=console                # console o smtp
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=user
+EMAIL_HOST_PASSWORD=password
+EMAIL_DEFAULT_FROM=taiga@example.com
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
 
-Telemetry anonymous data is collected in order to learn about the use of Taiga and improve the platform based on real scenarios. You may want to enable this to help us shape future Taiga.
+# --- RabbitMQ ---
+RABBITMQ_USER=taiga
+RABBITMQ_PASS=taiga
+RABBITMQ_VHOST=taiga
+RABBITMQ_ERLANG_COOKIE=secret-erlang-cookie
 
-```bash
+# --- Otros ---
+ATTACHMENTS_MAX_AGE=360
 ENABLE_TELEMETRY=True
+
+# ===========================================
+# GOOGLE SSO (NUEVO)
+# ===========================================
+GOOGLE_AUTH_ENABLED=false
+GOOGLE_AUTH_CLIENT_ID=""
+GOOGLE_AUTH_ALLOWED_DOMAINS=""       # Comma-separated: "upc.edu,domain.com"
+GOOGLE_AUTH_AUTO_CREATE=true
+
+# ===========================================
+# MÉTRICAS / LEARNING DASHBOARD (NUEVO)
+# ===========================================
+TAIGA_METRICS_PROVIDER=internal      # internal o external
+TAIGA_METRICS_SNAPSHOT_TTL=60        # TTL en minutos
+LD_TAIGA_BACKEND_URL=""              # URL del backend de LD
+LD_TAIGA_TIMEOUT=15                  # Timeout en segundos
+
+# ===========================================
+# CORS (NUEVO)
+# ===========================================
+CORS_ALLOWED_ORIGINS=""              # Comma-separated URLs adicionales
 ```
 
-You can opt out by setting this variable to False. By default, it's True.
+---
 
-## Additional customization
+## Variables de Entorno
 
-All these customization options are by default disabled and require you to edit `docker-compose.yml`.
+### Variables Principales
 
-You should add the corresponding environment variables in the proper services (or in `&default-back-environment` group) with a valid value in order to enable them. Please, do not modify it unless you know what you’re doing.
+| Variable | Descripción | Valor por Defecto | Requerido |
+|----------|-------------|-------------------|-----------|
+| `TAIGA_SCHEME` | Protocolo (http/https) | `http` | Sí |
+| `TAIGA_DOMAIN` | Dominio completo | `localhost:9000` | Sí |
+| `SUBPATH` | Subpath de la aplicación | `""` | No |
+| `WEBSOCKETS_SCHEME` | Protocolo WebSocket | `ws` | Sí |
+| `SECRET_KEY` | Clave secreta Django | - | **Sí** |
 
-### Session cookies in Django Admin
+### Variables de Base de Datos
 
-Taiga doesn't use session cookies in its API as it stateless. However, the Django Admin (`/admin/`) uses session cookie for authentication. By default, Taiga is configured to work behind HTTPS. If you're using HTTP (despite the strong recommendations against it), you'll need to configure the following environment variables so you can access the Admin:
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `POSTGRES_USER` | Usuario PostgreSQL | `taiga` |
+| `POSTGRES_PASSWORD` | Contraseña PostgreSQL | `taiga` |
 
-Add to `&default-back-environment` environments
-```yml
-SESSION_COOKIE_SECURE: "False"
-CSRF_COOKIE_SECURE: "False"
+### Variables de Email
+
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `EMAIL_BACKEND` | `console` o `smtp` | `console` |
+| `EMAIL_HOST` | Servidor SMTP | `smtp.host.example.com` |
+| `EMAIL_PORT` | Puerto SMTP | `587` |
+| `EMAIL_HOST_USER` | Usuario SMTP | `user` |
+| `EMAIL_HOST_PASSWORD` | Contraseña SMTP | `password` |
+| `EMAIL_DEFAULT_FROM` | Email remitente | `changeme@example.com` |
+| `EMAIL_USE_TLS` | Usar TLS | `True` |
+| `EMAIL_USE_SSL` | Usar SSL | `False` |
+
+### Variables de RabbitMQ
+
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `RABBITMQ_USER` | Usuario RabbitMQ | `taiga` |
+| `RABBITMQ_PASS` | Contraseña RabbitMQ | `taiga` |
+| `RABBITMQ_VHOST` | Virtual host | `taiga` |
+| `RABBITMQ_ERLANG_COOKIE` | Cookie Erlang | `secret-erlang-cookie` |
+
+### Variables de Google SSO (NUEVO)
+
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `GOOGLE_AUTH_ENABLED` | Habilitar Google SSO | `false` |
+| `GOOGLE_AUTH_CLIENT_ID` | Client ID de Google OAuth | `""` |
+| `GOOGLE_AUTH_ALLOWED_DOMAINS` | Dominios permitidos (comma-separated) | `""` |
+| `GOOGLE_AUTH_AUTO_CREATE` | Auto-crear usuarios | `true` |
+
+### Variables de Métricas (NUEVO)
+
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `TAIGA_METRICS_PROVIDER` | `internal` o `external` | `internal` |
+| `TAIGA_METRICS_SNAPSHOT_TTL` | TTL del caché (minutos) | `60` |
+| `LD_TAIGA_BACKEND_URL` | URL de Learning Dashboard | `""` |
+| `LD_TAIGA_TIMEOUT` | Timeout (segundos) | `15` |
+
+---
+
+## Google SSO Setup
+
+### Paso 1: Obtener Credenciales de Google
+
+1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
+2. Crea un proyecto o selecciona uno existente
+3. Ve a **APIs & Services > Credentials**
+4. Crea **OAuth client ID** (Web application)
+5. Configura **Authorized JavaScript origins**:
+   ```
+   http://localhost:9000          # Desarrollo
+   https://tu-dominio.com         # Producción
+   ```
+
+### Paso 2: Configurar Variables de Entorno
+
+En `.env`:
+
+```bash
+GOOGLE_AUTH_ENABLED=true
+GOOGLE_AUTH_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+GOOGLE_AUTH_ALLOWED_DOMAINS=tu-dominio.com,otro-dominio.com
+GOOGLE_AUTH_AUTO_CREATE=true
 ```
 
-More info about those variables can be found [here](https://docs.djangoproject.com/en/3.1/ref/settings/#csrf-cookie-secure).
+### Paso 3: Actualizar docker-compose.yml
 
-### Public registration
+Añadir a `&default-back-environment`:
 
-Public registration is disabled by default. If you want to allow a public register, you have to enable public registration on both, frontend and backend.
+```yaml
+x-environment:
+  &default-back-environment
+  # ... otras variables ...
+  GOOGLE_AUTH_ENABLED: "${GOOGLE_AUTH_ENABLED}"
+  GOOGLE_AUTH_CLIENT_IDS: "${GOOGLE_AUTH_CLIENT_ID}"
+  GOOGLE_AUTH_ALLOWED_DOMAINS: "${GOOGLE_AUTH_ALLOWED_DOMAINS}"
+  GOOGLE_AUTH_AUTO_CREATE: "${GOOGLE_AUTH_AUTO_CREATE}"
+```
 
-> **Note**
-> Be careful with the upper and lower case in these settiings. We will use 'True' for the backend and 'true' for the frontend (this is not a typo, otherwise it won't work).
+Añadir a servicio `taiga-front`:
 
+```yaml
+taiga-front:
+  environment:
+    # ... otras variables ...
+    GOOGLE_AUTH_ENABLED: "${GOOGLE_AUTH_ENABLED}"
+    GOOGLE_AUTH_CLIENT_ID: "${GOOGLE_AUTH_CLIENT_ID}"
+    GOOGLE_AUTH_ALLOWED_DOMAINS: "${GOOGLE_AUTH_ALLOWED_DOMAINS}"
+```
 
-Add to `&default-back-environment` environments
-```yml
+### Paso 4: Reiniciar
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+### Notas Importantes
+
+- El **Client ID debe ser el mismo** en backend y frontend
+- **HTTPS es obligatorio** en producción para Google OAuth
+- Los dominios en `ALLOWED_DOMAINS` deben coincidir exactamente
+
+---
+
+## Sistema de Métricas
+
+### Configuración
+
+En `.env`:
+
+```bash
+# Usar calculador interno (por defecto)
+TAIGA_METRICS_PROVIDER=internal
+TAIGA_METRICS_SNAPSHOT_TTL=60
+
+# O usar Learning Dashboard externo
+TAIGA_METRICS_PROVIDER=external
+LD_TAIGA_BACKEND_URL=https://ld-backend.example.com
+LD_TAIGA_TIMEOUT=15
+```
+
+### Actualizar docker-compose.yml
+
+Añadir a `&default-back-environment`:
+
+```yaml
+TAIGA_METRICS_PROVIDER: "${TAIGA_METRICS_PROVIDER}"
+TAIGA_METRICS_SNAPSHOT_TTL: "${TAIGA_METRICS_SNAPSHOT_TTL}"
+LD_TAIGA_BACKEND_URL: "${LD_TAIGA_BACKEND_URL}"
+LD_TAIGA_TIMEOUT: "${LD_TAIGA_TIMEOUT}"
+```
+
+---
+
+## Configuraciones Adicionales
+
+### Registro Público
+
+```yaml
+# En &default-back-environment
 PUBLIC_REGISTER_ENABLED: "True"
-```
 
-Add to `taiga-front` service environments
-```yml
+# En taiga-front
 PUBLIC_REGISTER_ENABLED: "true"
 ```
 
-> **Important**:
->
-> Taiga (in its default configuration) disables both Gitlab or Github oauth buttons whenever the public registration option hasn't been activated. To be able to use Github/Gitlab login/registration, make sure you have public registration activated on your Taiga instance.
+### GitHub OAuth
 
-### GitHub OAuth login
-
-Used for login with Github. This feature is disabled by default.
-
-Follow the documentation ([GitHub - Creating an OAuth App](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)) in Github, when save application Github displays the ID and Secret.
-
-> **Note**
-> Be careful with the upper and lower case in these settiings. We will use 'True' for the backend and 'true' for the frontend (this is not a typo, otherwise it won't work).
-
-> **Note**
-> `GITHUB_API_CLIENT_ID / GITHUB_CLIENT_ID` should have the same value.
-
-
-Add to `&default-back-environment` environments
-```yml
+```yaml
+# En &default-back-environment
 ENABLE_GITHUB_AUTH: "True"
-GITHUB_API_CLIENT_ID: "github-client-id"
-GITHUB_API_CLIENT_SECRET: "github-client-secret"
+GITHUB_API_CLIENT_ID: "tu-client-id"
+GITHUB_API_CLIENT_SECRET: "tu-client-secret"
 PUBLIC_REGISTER_ENABLED: "True"
-```
 
-Add to `taiga-front` service environments
-```yml
+# En taiga-front
 ENABLE_GITHUB_AUTH: "true"
-GITHUB_CLIENT_ID: "github-client-id"
+GITHUB_CLIENT_ID: "tu-client-id"
 PUBLIC_REGISTER_ENABLED: "true"
-````
+```
 
-### Gitlab OAuth login
+### GitLab OAuth
 
-Used for login with GitLab. This feature is disabled by default.
-
-Follow the documentation ([Configure GitLab as an OAuth 2.0 authentication identity provider](https://docs.gitlab.com/ee/integration/oauth_provider.html)) in Gitlab to get the _gitlab-client-id_ and the _gitlab-client-secret_.
-
-> **Note**
-> Be careful with the upper and lower case in these settiings. We will use 'True' for the backend and 'true' for the frontend (this is not a typo, otherwise it won't work).
-
-> **Note**
-> `GITLAB_API_CLIENT_ID / GITLAB_CLIENT_ID` and `GITLAB_URL` should have the same value.
-
-Add to `&default-back-environment` environments
-```yml
+```yaml
+# En &default-back-environment
 ENABLE_GITLAB_AUTH: "True"
-GITLAB_API_CLIENT_ID: "gitlab-client-id"
-GITLAB_API_CLIENT_SECRET: "gitlab-client-secret"
-GITLAB_URL: "gitlab-url"
+GITLAB_API_CLIENT_ID: "tu-client-id"
+GITLAB_API_CLIENT_SECRET: "tu-client-secret"
+GITLAB_URL: "https://gitlab.com"
 PUBLIC_REGISTER_ENABLED: "True"
-```
 
-Add to `taiga-front` service environments
-```yml
+# En taiga-front
 ENABLE_GITLAB_AUTH: "true"
-GITLAB_CLIENT_ID: "gitlab-client-id"
-GITLAB_URL: "gitlab-url"
+GITLAB_CLIENT_ID: "tu-client-id"
+GITLAB_URL: "https://gitlab.com"
 PUBLIC_REGISTER_ENABLED: "true"
 ```
 
-### Slack integration
+### Slack Integration
 
-Enable Slack integration in your Taiga instance. This feature is disabled by default.
-
-> **Note**
-> Be careful with the upper and lower case in these settiings. We will use 'True' for the backend and 'true' for the frontend (this is not a typo, otherwise it won't work).
-
-Add to `&default-back-environment` environments
-```yml
+```yaml
+# En &default-back-environment
 ENABLE_SLACK: "True"
-```
 
-Add to `taiga-front` service environments
-```yml
+# En taiga-front
 ENABLE_SLACK: "true"
 ```
 
-### GitHub importer
+---
 
-Activating this feature, you will be able to import projects from GitHub.
+## Configuración Avanzada
 
-Follow this documentation ([GitHub - Creating an OAuth App](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)) to obtain the _client id_ and the _client secret_ from GitHun.
+### Mapear archivos de configuración
 
-> **Note**
-> Be careful with the upper and lower case in these settiings. We will use 'True' for the backend and 'true' for the frontend (this is not a typo, otherwise it won't work).
-
-Add to `&default-back-environment` environments
-```yml
-ENABLE_GITHUB_IMPORTER: "True"
-GITHUB_IMPORTER_CLIENT_ID: "client-id-from-github"
-GITHUB_IMPORTER_CLIENT_SECRET: "client-secret-from-github"
-```
-
-Add to `taiga-front` service environments
-```yml
-ENABLE_GITHUB_IMPORTER: "true"
-```
-
-### Jira Importer
-
-Activating this feature, you will be able to import projects from Jira.
-
-Follow this documentation ([Jira - OAuth 1.0a for REST APIs](https://developer.atlassian.com/cloud/jira/platform/jira-rest-api-oauth-authentication/)) to obtain the _consumer key_ and the _public/private certificate key_.
-
-
-> **Note**
-> Be careful with the upper and lower case in these settiings. We will use 'True' for the backend and 'true' for the frontend (this is not a typo, otherwise it won't work).
-
-Add to `&default-back-environment` environments
-```yml
-ENABLE_JIRA_IMPORTER: "True"
-JIRA_IMPORTER_CONSUMER_KEY: "consumer-key-from-jira"
-JIRA_IMPORTER_CERT: "cert-from-jira"
-JIRA_IMPORTER_PUB_CERT: "pub-cert-from-jira"
-```
-
-Add to `taiga-front` service environments
-```yml
-ENABLE_JIRA_IMPORTER: "true"
-```
-
-### Trello importer
-
-Activating this feature, you will be able to import projects from Trello.
-
-For configure Trello, you have two options:
-- go to [https://trello.com/app-key](https://trello.com/app-key) (you must login first) and obtaing your development _API key_ and your _secret key_.
-- or with the new method, [create a new Power-Up](https://developer.atlassian.com/cloud/trello/guides/rest-api/api-introduction/#managing-your-api-key) and generate an _API key_ and a _secret key_
-
-> **Note**
-> Be careful with the upper and lower case in these settiings. We will use 'True' for the backend and 'true' for the frontend (this is not a typo, otherwise it won't work).
-
-Add to `&default-back-environment` environments
-```yml
-ENABLE_TRELLO_IMPORTER: "True"
-TRELLO_IMPORTER_API_KEY: "api-key-from-trello"
-TRELLO_IMPORTER_SECRET_KEY: "secret-key-from-trello"
-```
-
-Add to `taiga-front` service environments
-```yml
-ENABLE_TRELLO_IMPORTER: "true"
-```
-
-## Advanced configuration
-
-The advanced configuration **will ignore** the environment variables in `docker-compose.yml` or `docker-compose-inits.yml`. Skip this section if you're using env vars.
-
-It requires you to map the configuration files of `taiga-back` and `taiga-front` services to local files in order to unlock further configuration options.
-
-**Map a `config.py` file**
-
-From [taiga-back](https://github.com/taigaio/taiga-back) download the file `settings/config.py.prod.example` and rename it:
+**Backend `config.py`:**
 
 ```bash
-mv settings/config.py.prod.example settings/config.py
+cp ../taiga-back/settings/config.py.prod.example config.py
+# Editar config.py
 ```
 
-Edit `config.py` with your own configuration:
-
-- Taiga secret key: **it's important** to change it. It must have the same value as the secret key in `taiga-events` and `taiga-protected`
-- Taiga urls: configure where Taiga would be served using `TAIGA_URL`, `SITES` and `FORCE_SCRIPT_NAME` (see examples below)
-- Connection to PostgreSQL; check `DATABASES` section in the file
-- Connection to RabbitMQ for `taiga-events`; check "EVENTS" section in the file
-- Connection to RabbitMQ for `taiga-async`; check "TAIGA ASYNC" section in the file
-- Credentials for email; check "EMAIL" section in the file
-- Enable/disable anonymous telemetry; check "TELEMETRY" section in the file
-
-Example to configure Taiga in **subdomain**:
-```python
-TAIGA_SITES_SCHEME = "https"
-TAIGA_SITES_DOMAIN = "taiga.mycompany.com"
-FORCE_SCRIPT_NAME = ""
+En `docker-compose.yml`:
+```yaml
+volumes:
+  - ./config.py:/taiga-back/settings/config.py
 ```
 
-Example to configure Taiga in **subpath**:
-```python
-TAIGA_SITES_SCHEME = "https"
-TAIGA_SITES_DOMAIN = "taiga.mycompany.com"
-FORCE_SCRIPT_NAME = "/taiga"
-```
-
-Check as well the rest of the configuration if you need to enable some advanced features.
-
-Map the file into `/taiga-back/settings/config.py`. Have in mind that you have to map it both in `docker-compose.yml` and `docker-compose-inits.yml`. You can check the `x-volumes` section in docker-compose.yml with an example.
-
-**Map a `conf.json` file**
-
-From [taiga-front](https://github.com/taigaio/taiga-front) download the file `dist/conf.example.json` and rename it:
+**Frontend `conf.json`:**
 
 ```bash
-mv dist/conf.example.json dist/conf.json
+cp ../taiga-front/conf/conf.example.json conf.json
+# Editar conf.json
 ```
 
-Edit it with your own configuration:
+---
 
-- Taiga urls: configure where Taiga would be served using `api`, `eventsUrl` and `baseHref` (see examples below)
+## Proxy y SSL
 
-Example of `conf.json` to serve Taiga in a **subdomain**:
-```json
-{
-    "api": "https://taiga.mycompany.com/api/v1/",
-    "eventsUrl": "wss://taiga.mycompany.com/events",
-    "baseHref": "/",
-```
+### Nginx como Proxy Reverso
 
-Example of `conf.json` to serve Taiga in **subpath**:
-```json
-{
-    "api": "https://mycompany.com/taiga/api/v1/",
-    "eventsUrl": "wss://mycompany.com/taiga/events",
-    "baseHref": "/taiga/",
-```
+```nginx
+server {
+    server_name taiga.example.com;
 
-Check as well the rest of the configuration if you need to enable some advanced features.
-
-Map the file into `/taiga-front/dist/config.py`.
-
-## Configure an admin user
-
-```bash
-$ docker compose up -d
-
-$ docker compose -f docker-compose.yml -f docker-compose-inits.yml run --rm taiga-manage createsuperuser
-```
-
-## Up and running
-
-Once everything has been installed, launch all the services and check the result:
-
-```bash
-$ docker compose up -d
-```
-
-## Configure the proxy
-
-Your host configuration needs to make a proxy to `http://localhost:9000`.
-
-If Taiga is being served in a **subdomain**:
-```
-  server {
-      server_name taiga.mycompany.com;
-
-      location / {
+    location / {
         proxy_set_header Host $http_host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Scheme $scheme;
@@ -474,10 +407,9 @@ If Taiga is being served in a **subdomain**:
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_redirect off;
         proxy_pass http://localhost:9000/;
-      }
+    }
 
-      # Events
-      location /events {
+    location /events {
         proxy_pass http://localhost:9000/events;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -486,45 +418,141 @@ If Taiga is being served in a **subdomain**:
         proxy_connect_timeout 7d;
         proxy_send_timeout 7d;
         proxy_read_timeout 7d;
-      }
+    }
 
-      # TLS: Configure your TLS following the best practices inside your company
-      # Logs and other configurations
-  }
-```
+    # SSL
+    listen 443 ssl;
+    ssl_certificate /etc/letsencrypt/live/taiga.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/taiga.example.com/privkey.pem;
+}
 
-If Taiga is being served in a **subpath** instead of a subdomain, the configuration should be something like:
-```
 server {
-  server_name mycompany.com;
-
-  location /taiga/ {
-    proxy_set_header Host $http_host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Scheme $scheme;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_redirect off;
-    proxy_pass http://localhost:9000/;
-  }
-
-  # Events
-  location /taiga/events {
-    proxy_pass http://localhost:9000/events;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-    proxy_set_header Host $host;
-    proxy_connect_timeout 7d;
-    proxy_send_timeout 7d;
-    proxy_read_timeout 7d;
-  }
-
-  # TLS: Configure your TLS following the best practices inside your company
-  # Logs and other configurations
+    listen 80;
+    server_name taiga.example.com;
+    return 301 https://$server_name$request_uri;
 }
 ```
 
-## Change between subpath and subdomain
+---
 
-If you're changing Taiga configuration from default subdomain (https://taiga.mycompany.com) to subpath (http://mycompany.com/subpath) or vice versa, on top of adjusting the configuration as said above, you should consider changing the TAIGA_SECRET_KEY so the refresh works properly for the end user.
+## Producción
+
+### Checklist de Producción
+
+- [ ] Cambiar `SECRET_KEY` a valor único de 64+ caracteres
+- [ ] Cambiar `POSTGRES_PASSWORD` a contraseña segura
+- [ ] Configurar `TAIGA_SCHEME=https`
+- [ ] Configurar `WEBSOCKETS_SCHEME=wss`
+- [ ] Configurar email SMTP real
+- [ ] Configurar proxy reverso con SSL
+- [ ] Configurar backups de base de datos
+- [ ] Cambiar `RABBITMQ_PASS` y `RABBITMQ_ERLANG_COOKIE`
+- [ ] Configurar dominios de Google OAuth si se usa
+
+### Generar Claves Seguras
+
+```bash
+# Generar SECRET_KEY
+python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+
+# Generar contraseñas
+openssl rand -base64 32
+```
+
+### Backups
+
+```bash
+# Backup de base de datos
+docker compose exec taiga-db pg_dump -U taiga taiga > backup.sql
+
+# Backup de media
+docker compose cp taiga-back:/taiga-back/media ./media-backup
+```
+
+---
+
+## Troubleshooting
+
+### Los contenedores no inician
+
+```bash
+docker compose logs -f
+docker compose ps
+```
+
+### Error de conexión a base de datos
+
+```bash
+docker compose exec taiga-db pg_isready -U taiga
+```
+
+### Google SSO no funciona
+
+1. Verificar URLs en Google Console
+2. Verificar `GOOGLE_AUTH_CLIENT_ID`
+3. Verificar dominios configurados
+
+### WebSocket no conecta
+
+- Verificar `WEBSOCKETS_SCHEME` coincida con SSL
+- Verificar proxy pase headers de WebSocket
+
+### Error CORS
+
+- Añadir dominio a `CORS_ALLOWED_ORIGINS`
+
+---
+
+## Comandos Útiles
+
+```bash
+# Iniciar
+docker compose up -d
+
+# Parar
+docker compose down
+
+# Ver logs
+docker compose logs -f [servicio]
+
+# Ejecutar comando de gestión
+./taiga-manage.sh [comando]
+
+# Crear superusuario
+./taiga-manage.sh createsuperuser
+
+# Reconstruir
+docker compose build --no-cache
+
+# Limpiar todo
+docker compose down -v
+```
+
+---
+
+## Estructura del Proyecto
+
+```
+taiga-docker/
+├── .env                    # Variables de entorno
+├── docker-compose.yml      # Configuración principal
+├── docker-compose-inits.yml # Inicialización
+├── launch-taiga.sh         # Script de inicio
+├── taiga-manage.sh         # Wrapper para manage.py
+└── taiga-gateway/
+    └── taiga.conf          # Configuración Nginx interno
+```
+
+---
+
+## Community
+
+If you **need help to setup Taiga**, want to **talk about some cool enhancement** or you have **some questions**, please go to [Taiga community](https://community.taiga.io/).
+
+## License
+
+Every code patch accepted in Taiga codebase is licensed under [MPL 2.0](LICENSE).
+
+---
+
+*Modificado por Pol Alcoverro* ❤️
