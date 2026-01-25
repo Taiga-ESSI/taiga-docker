@@ -58,7 +58,8 @@ services:
     build:
       context: ../taiga-back
       dockerfile: docker/Dockerfile
-    environment: *default-back-environment
+    environment:
+      <<: *default-back-environment
     ports:
       - "8000:8000"
     volumes:
