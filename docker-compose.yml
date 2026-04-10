@@ -28,6 +28,14 @@ x-environment:
   # Telemetry settings
   ENABLE_TELEMETRY: "${ENABLE_TELEMETRY}"
   # ...your customizations go here
+  GOOGLE_AUTH_ENABLED: "${GOOGLE_AUTH_ENABLED}"
+  GOOGLE_AUTH_CLIENT_IDS: "${GOOGLE_AUTH_CLIENT_ID}"
+  GOOGLE_AUTH_ALLOWED_DOMAINS: "${GOOGLE_AUTH_ALLOWED_DOMAINS}"
+  GOOGLE_AUTH_AUTO_CREATE: "${GOOGLE_AUTH_AUTO_CREATE}"
+  TAIGA_METRICS_PROVIDER: "${TAIGA_METRICS_PROVIDER}"
+ # TAIGA_METRICS_SNAPSHOT_TTL: "${TAIGA_METRICS_SNAPSHOT_TTL}"
+  LD_TAIGA_BACKEND_URL: "${LD_TAIGA_BACKEND_URL}"
+  LD_TAIGA_TIMEOUT: "${LD_TAIGA_TIMEOUT}"
 
 x-volumes:
   # These volumens will be used by taiga-back and taiga-async.
@@ -53,6 +61,7 @@ services:
       - taiga-db-data:/var/lib/postgresql/data
     networks:
       - taiga
+    restart: always
 
   taiga-back:
     build:
@@ -75,6 +84,7 @@ services:
       taiga-async-rabbitmq:
         condition: service_started
     command: python manage.py runserver 0.0.0.0:8000
+    restart: always
 
   taiga-async:
     build:
@@ -95,6 +105,7 @@ services:
         condition: service_started
       taiga-async-rabbitmq:
         condition: service_started
+    restart: always
 
   taiga-async-rabbitmq:
     image: rabbitmq:3.8-management-alpine
@@ -108,6 +119,7 @@ services:
       - taiga-async-rabbitmq-data:/var/lib/rabbitmq
     networks:
       - taiga
+    restart: always
 
   taiga-front:
     build:
@@ -119,11 +131,20 @@ services:
       TAIGA_URL: "${TAIGA_SCHEME}://${TAIGA_DOMAIN}"
       TAIGA_WEBSOCKETS_URL: "${WEBSOCKETS_SCHEME}://${TAIGA_DOMAIN}"
       TAIGA_SUBPATH: "${SUBPATH}"
+      GOOGLE_AUTH_ENABLED: "${GOOGLE_AUTH_ENABLED}"
+      GOOGLE_AUTH_CLIENT_ID: "${GOOGLE_AUTH_CLIENT_ID}"
+      GOOGLE_AUTH_ALLOWED_DOMAINS: "${GOOGLE_AUTH_ALLOWED_DOMAINS}"
     volumes:
       - ../taiga-front:/taiga
       - /taiga/node_modules
+      - ./conf.json.template:/tmp/conf.json.template
+    command: >
+      /bin/sh -c "mkdir -p /taiga/dist &&
+      python3 -c \"import os; tpl=open('/tmp/conf.json.template').read(); content=os.path.expandvars(tpl); open('/taiga/conf/conf.json','w').write(content); open('/taiga/dist/conf.json','w').write(content)\" &&
+      ./node_modules/.bin/gulp"
     networks:
       - taiga
+    restart: always
 
   taiga-events:
     image: taigaio/taiga-events:latest
@@ -137,6 +158,7 @@ services:
     depends_on:
       taiga-events-rabbitmq:
         condition: service_started
+    restart: always
 
   taiga-events-rabbitmq:
     image: rabbitmq:3.8-management-alpine
@@ -150,6 +172,7 @@ services:
       - taiga-events-rabbitmq-data:/var/lib/rabbitmq
     networks:
       - taiga
+    restart: always
 
   taiga-protected:
     image: taigaio/taiga-protected:latest
@@ -158,6 +181,7 @@ services:
       SECRET_KEY: "${SECRET_KEY}"
     networks:
       - taiga
+    restart: always
 
   taiga-gateway:
     image: nginx:1.19-alpine
@@ -173,6 +197,7 @@ services:
       - taiga-front
       - taiga-back
       - taiga-events
+    restart: always
 
 volumes:
   taiga-static-data:
