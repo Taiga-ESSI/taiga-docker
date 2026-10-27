@@ -13,8 +13,8 @@
     "defaultLoginEnabled": true,
     "publicRegisterEnabled": true,
     "googleAuth" : {
-    	"enabled": false,
-    	"clientId": null,
+    	"enabled": true,
+    	"clientId": "${GOOGLE_AUTH_CLIENT_ID}",
     	"allowedDomains": ["upc.edu", "estudiantat.upc.edu"]
     },
     "feedbackEnabled": true,
