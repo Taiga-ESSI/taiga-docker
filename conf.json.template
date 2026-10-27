@@ -1,0 +1,32 @@
+{
+    "api": "${TAIGA_URL}${TAIGA_SUBPATH}/api/v1/",
+    "eventsUrl": "${TAIGA_WEBSOCKETS_URL}${TAIGA_SUBPATH}/events",
+    "baseHref": "${TAIGA_SUBPATH}/",
+    "eventsMaxMissedHeartbeats": 5,
+    "eventsHeartbeatIntervalTime": 60000,
+    "eventsReconnectTryInterval": 10000,
+    "debug": true,
+    "debugInfo": true,
+    "defaultLanguage": "en",
+    "themes": ["taiga"],
+    "defaultTheme": "taiga",
+    "defaultLoginEnabled": true,
+    "publicRegisterEnabled": true,
+    "googleAuth" : {
+    	"enabled": false,
+    	"clientId": null,
+    	"allowedDomains": ["upc.edu", "estudiantat.upc.edu"]
+    },
+    "feedbackEnabled": true,
+    "supportUrl": "https://community.taiga.io/",
+    "privacyPolicyUrl": null,
+    "termsOfServiceUrl": null,
+    "maxUploadFileSize": null,
+    "contribPlugins": [],
+    "gravatar": false,
+    "rtlLanguages": [
+        "ar",
+        "fa",
+        "he"
+    ]
+}

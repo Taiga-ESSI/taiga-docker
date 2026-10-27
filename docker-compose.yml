@@ -33,7 +33,7 @@ x-environment:
   GOOGLE_AUTH_ALLOWED_DOMAINS: "${GOOGLE_AUTH_ALLOWED_DOMAINS}"
   GOOGLE_AUTH_AUTO_CREATE: "${GOOGLE_AUTH_AUTO_CREATE}"
   TAIGA_METRICS_PROVIDER: "${TAIGA_METRICS_PROVIDER}"
- # TAIGA_METRICS_SNAPSHOT_TTL: "${TAIGA_METRICS_SNAPSHOT_TTL}"
+  TAIGA_METRICS_SNAPSHOT_TTL: "${TAIGA_METRICS_SNAPSHOT_TTL}"
   LD_TAIGA_BACKEND_URL: "${LD_TAIGA_BACKEND_URL}"
   LD_TAIGA_TIMEOUT: "${LD_TAIGA_TIMEOUT}"
 
@@ -77,6 +77,7 @@ services:
       - taiga-media-data:/taiga-back/media
     networks:
       - taiga
+      - ld-taiga
     depends_on:
       taiga-db:
         condition: service_healthy
@@ -99,6 +100,7 @@ services:
       - taiga-media-data:/taiga-back/media
     networks:
       - taiga
+      - ld-taiga
     depends_on:
       taiga-db:
         condition: service_healthy
@@ -194,6 +196,7 @@ services:
       - taiga-media-data:/taiga/media
     networks:
       - taiga
+      - ld-taiga
     depends_on:
       - taiga-front
       - taiga-back
@@ -210,3 +213,5 @@ volumes:
 
 networks:
   taiga:
+  ld-taiga:
+    external: true
