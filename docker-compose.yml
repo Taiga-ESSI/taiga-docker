@@ -77,7 +77,6 @@ services:
       - taiga-media-data:/taiga-back/media
     networks:
       - taiga
-      - ld-taiga
     depends_on:
       taiga-db:
         condition: service_healthy
@@ -100,7 +99,6 @@ services:
       - taiga-media-data:/taiga-back/media
     networks:
       - taiga
-      - ld-taiga
     depends_on:
       taiga-db:
         condition: service_healthy
@@ -196,7 +194,6 @@ services:
       - taiga-media-data:/taiga/media
     networks:
       - taiga
-      - ld-taiga
     depends_on:
       - taiga-front
       - taiga-back
@@ -213,5 +210,3 @@ volumes:
 
 networks:
   taiga:
-  ld-taiga:
-    external: true
