@@ -196,7 +196,7 @@ services:
       - taiga
       - traefik-network
     label_file:
-      - ../traefik-labels
+      - ../traefik.labels
     depends_on:
       - taiga-front
       - taiga-back
