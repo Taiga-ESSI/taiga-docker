@@ -194,6 +194,9 @@ services:
       - taiga-media-data:/taiga/media
     networks:
       - taiga
+      - traefik-network
+    label_file:
+      - ../traefik-labels
     depends_on:
       - taiga-front
       - taiga-back
@@ -210,3 +213,7 @@ volumes:
 
 networks:
   taiga:
+  traefik-network:
+    name: traefik-network
+    driver: bridge
+    external: true
