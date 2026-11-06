@@ -142,7 +142,8 @@ GOOGLE_AUTH_AUTO_CREATE=true
 # ===========================================
 TAIGA_METRICS_PROVIDER=internal      # internal o external
 TAIGA_METRICS_SNAPSHOT_TTL=60        # TTL en minutos
-LD_TAIGA_BACKEND_URL=""              # URL del backend de LD
+LD_TAIGA_BACKEND_URL=""              # URL del backend de LD (sin /api)
+LD_API_KEY=""                        # Misma clave que el dashboard (cabecera X-LD-API-Key)
 LD_TAIGA_TIMEOUT=15                  # Timeout en segundos
 
 # ===========================================
@@ -209,7 +210,8 @@ CORS_ALLOWED_ORIGINS=""              # Comma-separated URLs adicionales
 |----------|-------------|-------------------|
 | `TAIGA_METRICS_PROVIDER` | `internal` o `external` | `internal` |
 | `TAIGA_METRICS_SNAPSHOT_TTL` | TTL del caché (minutos) | `60` |
-| `LD_TAIGA_BACKEND_URL` | URL de Learning Dashboard | `""` |
+| `LD_TAIGA_BACKEND_URL` | URL de Learning Dashboard (sin `/api`) | `""` |
+| `LD_API_KEY` | Clave compartida enviada como `X-LD-API-Key` | `""` |
 | `LD_TAIGA_TIMEOUT` | Timeout (segundos) | `15` |
 
 ---
@@ -293,6 +295,7 @@ TAIGA_METRICS_SNAPSHOT_TTL=60
 # O usar Learning Dashboard externo
 TAIGA_METRICS_PROVIDER=external
 LD_TAIGA_BACKEND_URL=https://ld-backend.example.com
+LD_API_KEY=copy-the-root-LD_API_KEY-here
 LD_TAIGA_TIMEOUT=15
 ```
 
@@ -304,6 +307,7 @@ Añadir a `&default-back-environment`:
 TAIGA_METRICS_PROVIDER: "${TAIGA_METRICS_PROVIDER}"
 TAIGA_METRICS_SNAPSHOT_TTL: "${TAIGA_METRICS_SNAPSHOT_TTL}"
 LD_TAIGA_BACKEND_URL: "${LD_TAIGA_BACKEND_URL}"
+LD_API_KEY: "${LD_API_KEY}"
 LD_TAIGA_TIMEOUT: "${LD_TAIGA_TIMEOUT}"
 ```
 
